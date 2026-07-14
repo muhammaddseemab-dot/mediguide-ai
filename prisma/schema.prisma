@@ -1,0 +1,292 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ============================================================================
+// User & Authentication Models
+// ============================================================================
+
+model User {
+  id            String    @id @default(cuid())
+  email         String    @unique
+  name          String
+  image         String?
+  emailVerified DateTime?
+  password      String?   // Only populated for email/password auth
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  // Relations
+  accounts              Account[]
+  sessions              Session[]
+  healthProfile         HealthProfile?
+  consultations         Consultation[]
+  medicineOrders        MedicineOrder[]
+  emergencyLogs         EmergencyLog[]
+  emailVerification     EmailVerification?
+  passwordResetTokens   PasswordResetToken[]
+
+  // Indexes for frequently queried fields
+  @@index([email])
+  @@index([createdAt])
+  @@map("users")
+}
+
+model Account {
+  id                 String  @id @default(cuid())
+  userId             String
+  type               String
+  provider           String
+  providerAccountId  String
+  refresh_token      String? @db.Text
+  access_token       String? @db.Text
+  expires_at         Int?
+  token_type         String?
+  scope              String?
+  id_token           String? @db.Text
+  session_state      String?
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([provider, providerAccountId])
+  @@index([userId])
+  @@map("accounts")
+}
+
+model Session {
+  id           String   @id @default(cuid())
+  sessionToken String   @unique
+  userId       String
+  expires      DateTime
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([expires])
+  @@map("sessions")
+}
+
+model VerificationToken {
+  identifier String
+  token      String   @unique
+  expires    DateTime
+
+  @@unique([identifier, token])
+  @@index([expires])
+  @@map("verification_tokens")
+}
+
+// ============================================================================
+// Email Verification Model for tracking email verification requests
+// ============================================================================
+
+model EmailVerification {
+  id        String   @id @default(cuid())
+  userId    String   @unique
+  email     String   @unique
+  token     String   @unique
+  expiresAt DateTime
+  verified  Boolean  @default(false)
+  createdAt DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([token])
+  @@index([expiresAt])
+  @@map("email_verifications")
+}
+
+// ============================================================================
+// Password Reset Token Model
+// ============================================================================
+
+model PasswordResetToken {
+  id        String   @id @default(cuid())
+  userId    String
+  email     String
+  token     String   @unique
+  expiresAt DateTime
+  used      Boolean  @default(false)
+  createdAt DateTime @default(now())
+
+  @@index([token])
+  @@index([expiresAt])
+  @@map("password_reset_tokens")
+}
+
+// ============================================================================
+// Health & Medical Data Models
+// ============================================================================
+
+model HealthProfile {
+  id                  String   @id @default(cuid())
+  userId              String   @unique
+  age                 Int?
+  gender              String?
+  bloodType           String?
+  allergies           String[]
+  chronicConditions   String[]
+  currentMedications  Json?    // Array of { medicineId, dosage, frequency, startDate }
+  emergencyContacts   Json?    // Array of { name, relationship, phone, email }
+  medicalHistory      Json?    // Array of { condition, diagnosedDate, status, notes }
+  language            String   @default("en")
+  theme               String   @default("light")
+  notificationPreference Json? @default("{\"email\": true, \"sms\": false}")
+  createdAt           DateTime @default(now())
+  updatedAt           DateTime @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([language])
+  @@map("health_profiles")
+}
+
+model Consultation {
+  id                  String   @id @default(cuid())
+  userId              String
+  symptoms            String[]
+  aiAnalysis          Json     // Structure: { severity, confidence, recommendations[], warnings[] }
+  severity            String   // 'low', 'moderate', 'high', 'critical'
+  confidenceLevel     Int      @db.SmallInt // 0-100
+  emergencyDetected   Boolean  @default(false)
+  recommendations     Json?    // Array of recommendation objects
+  conversationHistory Json?    // Array of messages: { role: 'user'|'assistant', content, timestamp }
+  language            String   @default("en") // Language of consultation
+  createdAt           DateTime @default(now())
+  updatedAt           DateTime @updatedAt
+
+  user           User           @relation(fields: [userId], references: [id], onDelete: Cascade)
+  medicineOrders MedicineOrder[]
+  emergencyLogs  EmergencyLog[]
+
+  @@index([userId])
+  @@index([severity])
+  @@index([emergencyDetected])
+  @@index([createdAt])
+  @@map("consultations")
+}
+
+model EmergencyLog {
+  id                        String   @id @default(cuid())
+  userId                    String?
+  consultationId            String?
+  symptoms                  String[]
+  detectionConfidence       Int      @db.SmallInt
+  emergencyLevel            String   // 'critical', 'urgent', 'moderate'
+  emergencyContactsProvided Json?    // Array of emergency contacts
+  hospitalInfo              Json?    // Array of nearby hospitals
+  userActionTaken           String?  // 'called_ambulance', 'went_hospital', 'called_doctor', null
+  adminNotified             Boolean  @default(false)
+  responseTimeMs            Int?     // Milliseconds to detect and respond
+  createdAt                 DateTime @default(now())
+
+  user         User?         @relation(fields: [userId], references: [id], onDelete: SetNull)
+  consultation Consultation? @relation(fields: [consultationId], references: [id], onDelete: SetNull)
+
+  @@index([userId])
+  @@index([consultationId])
+  @@index([emergencyLevel])
+  @@index([createdAt])
+  @@map("emergency_logs")
+}
+
+// ============================================================================
+// Medicine & Pharmacy Models
+// ============================================================================
+
+model Medicine {
+  id                  String   @id @default(cuid())
+  name                String
+  genericName         String
+  dosage              String
+  price               Decimal  @db.Decimal(10, 2)
+  availability        Boolean  @default(true)
+  prescriptionRequired Boolean @default(false)
+  manufacturer        String
+  category            String?  // e.g., 'painkiller', 'antibiotic', 'vitamin'
+  sideEffects         String[]
+  contraindications   String[]
+  description         String?  @db.Text
+  stock               Int      @default(100)
+  createdAt           DateTime @default(now())
+  updatedAt           DateTime @updatedAt
+
+  medicineOrders MedicineOrderItem[]
+
+  @@index([name])
+  @@index([genericName])
+  @@index([availability])
+  @@index([prescriptionRequired])
+  @@index([category])
+  @@map("medicines")
+}
+
+model MedicineOrder {
+  id                   String   @id @default(cuid())
+  userId               String
+  consultationId       String?
+  totalAmount          Decimal  @db.Decimal(10, 2)
+  orderStatus          String   @default("pending") // 'pending', 'confirmed', 'processing', 'shipped', 'delivered', 'cancelled'
+  pharmacyPartnerId    String?
+  trackingNumber       String?
+  prescriptionVerified Boolean  @default(false)
+  shippingAddress      String?
+  notes                String?  @db.Text
+  createdAt            DateTime @default(now())
+  deliveredAt          DateTime?
+  updatedAt            DateTime @updatedAt
+
+  user          User                @relation(fields: [userId], references: [id], onDelete: Cascade)
+  consultation  Consultation?       @relation(fields: [consultationId], references: [id], onDelete: SetNull)
+  medicineItems MedicineOrderItem[]
+
+  @@index([userId])
+  @@index([consultationId])
+  @@index([orderStatus])
+  @@index([createdAt])
+  @@map("medicine_orders")
+}
+
+model MedicineOrderItem {
+  id        String  @id @default(cuid())
+  orderId   String
+  medicineId String
+  quantity  Int
+  unitPrice Decimal @db.Decimal(10, 2)
+
+  order    MedicineOrder @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  medicine Medicine      @relation(fields: [medicineId], references: [id], onDelete: Restrict)
+
+  @@index([orderId])
+  @@index([medicineId])
+  @@map("medicine_order_items")
+}
+
+// ============================================================================
+// Audit & Logging Models
+// ============================================================================
+
+model AuditLog {
+  id         String   @id @default(cuid())
+  userId     String?
+  action     String   // 'viewed_health_data', 'exported_data', 'deleted_data', etc.
+  resource   String   // 'consultation', 'health_profile', 'medicine_order', etc.
+  resourceId String?
+  changes    Json?    // Before/after values for modifications
+  ipAddress  String?
+  userAgent  String?  @db.Text
+  createdAt  DateTime @default(now())
+
+  @@index([userId])
+  @@index([action])
+  @@index([createdAt])
+  @@map("audit_logs")
+}
