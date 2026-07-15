@@ -2,60 +2,149 @@
 
 ## Overview
 
-MediGuide AI is a full-stack healthcare platform built with Next.js 14, leveraging Google's Gemini AI for intelligent symptom analysis. The architecture follows a modern serverless pattern with API routes handling backend logic and React components managing the frontend experience.
+MediGuide AI is a full-stack healthcare platform built with Next.js 14, leveraging Google's Gemini AI for intelligent symptom analysis.
 
 ---
 
-## High-Level Architecture
+## Architecture Diagram
 
+```mermaid
+graph TB
+    subgraph CLIENT["Client Layer"]
+        BROWSER[Browser]
+        HOME[Home Page]
+        SYMPTOM[Symptom Checker]
+        HOSPITAL[Hospital Finder]
+        MARKET[Marketplace]
+        ADMIN[Admin Dashboard]
+    end
+
+    subgraph APP["Application Layer - Next.js 14"]
+        ROUTER[App Router]
+        THEME[ThemeProvider]
+        LANG[LanguageProvider]
+        LAYOUT[PublicLayout]
+    end
+
+    subgraph API["API Layer"]
+        ANALYZE[/api/symptoms/analyze]
+        EMERGENCY[/api/symptoms/emergency]
+        AUTH[/api/auth/*]
+        PROFILE[/api/profile/*]
+    end
+
+    subgraph EXTERNAL["External Services"]
+        GEMINI[Google Gemini AI]
+        GEO[Geolocation API]
+        LOCAL[LocalStorage]
+    end
+
+    CLIENT --> APP
+    APP --> API
+    API --> EXTERNAL
+    
+    BROWSER --> HOME
+    BROWSER --> SYMPTOM
+    BROWSER --> HOSPITAL
+    BROWSER --> MARKET
+    BROWSER --> ADMIN
+    
+    ROUTER --> THEME
+    THEME --> LANG
+    LANG --> LAYOUT
+    
+    SYMPTOM --> ANALYZE
+    SYMPTOM --> EMERGENCY
+    HOSPITAL --> GEO
+    ADMIN --> AUTH
+    ADMIN --> PROFILE
+    
+    ANALYZE --> GEMINI
+    LOCAL -.-> LANG
 ```
-┌─────────────────────────────────────────────────────────────────────────────┐
-│                              CLIENT LAYER                                    │
-│  ┌─────────────────────────────────────────────────────────────────────┐    │
-│  │                    Browser (Next.js App Router)                      │    │
-│  │  ┌──────────┐ ┌──────────┐ ┌──────────┐ ┌──────────┐ ┌──────────┐  │    │
-│  │  │  Home    │ │ Symptom  │ │ Hospital │ │ Medicine │ │  Admin   │  │    │
-│  │  │  Page    │ │ Checker  │ │  Finder  │ │ Market   │ │Dashboard │  │    │
-│  │  └──────────┘ └──────────┘ └──────────┘ └──────────┘ └──────────┘  │    │
-│  └─────────────────────────────────────────────────────────────────────┘    │
-└─────────────────────────────────────────────────────────────────────────────┘
-                                      │
-                                      ▼
-┌─────────────────────────────────────────────────────────────────────────────┐
-│                           APPLICATION LAYER                                  │
-│  ┌─────────────────────────────────────────────────────────────────────┐    │
-│  │                    Next.js 14 App Router                             │    │
-│  │  ┌─────────────────────────────────────────────────────────────┐    │    │
-│  │  │                    Context Providers                          │    │    │
-│  │  │  ┌──────────────┐  ┌──────────────┐  ┌──────────────────┐   │    │    │
-│  │  │  │   Theme      │  │   Language   │  │     Public        │   │    │    │
-│  │  │  │   Provider   │  │   Provider   │  │     Layout        │   │    │    │
-│  │  │  └──────────────┘  └──────────────┘  └──────────────────┘   │    │    │
-│  │  └─────────────────────────────────────────────────────────────┘    │    │
-│  └─────────────────────────────────────────────────────────────────────┘    │
-└─────────────────────────────────────────────────────────────────────────────┘
-                                      │
-                                      ▼
-┌─────────────────────────────────────────────────────────────────────────────┐
-│                              API LAYER                                       │
-│  ┌─────────────────────────────────────────────────────────────────────┐    │
-│  │                      API Routes (Route Handlers)                     │    │
-│  │  ┌────────────────┐  ┌────────────────┐  ┌────────────────────┐    │    │
-│  │  │ /api/symptoms/ │  │  /api/auth/    │  │   /api/profile/    │    │    │
-│  │  │   analyze      │  │  register      │  │   personal         │    │    │
-│  │  │   emergency    │  │  verify-email  │  │   health           │    │    │
-│  │  └────────────────┘  └────────────────┘  └────────────────────┘    │    │
-│  └─────────────────────────────────────────────────────────────────────┘    │
-└─────────────────────────────────────────────────────────────────────────────┘
-                                      │
-                                      ▼
-┌─────────────────────────────────────────────────────────────────────────────┐
-│                           EXTERNAL SERVICES                                  │
-│  ┌──────────────────────┐  ┌──────────────────────┐  ┌──────────────────┐  │
-│  │   Google Gemini AI   │  │    Browser APIs      │  │   LocalStorage   │  │
-│  │   (Symptom Analysis) │  │   (Geolocation)      │  │   (Session Data) │  │
-│  └──────────────────────┘  └──────────────────────┘  └──────────────────┘  │
-└─────────────────────────────────────────────────────────────────────────────┘
+
+---
+
+## Data Flow Diagram
+
+```mermaid
+flowchart LR
+    subgraph INPUT[User Input]
+        A[Symptom Description]
+    end
+    
+    subgraph CLIENT_PROCESS[Client Processing]
+        B[Validation]
+        C[Keyword Scan]
+    end
+    
+    subgraph API_PROCESS[API Processing]
+        D[Rate Limiting]
+        E[Prompt Engineering]
+    end
+    
+    subgraph AI[AI Analysis]
+        F[Gemini API]
+    end
+    
+    subgraph OUTPUT[Response]
+        G[Structure Data]
+        H[UI Render]
+    end
+    
+    A --> B --> C --> D --> E --> F --> G --> H
+    
+    C -->|Emergency Keywords| I[Alert Generation]
+    I --> H
+```
+
+---
+
+## Component Architecture
+
+```mermaid
+graph TD
+    subgraph ROOT[Root Layout]
+        HTML[HTML Document]
+        BODY[Body]
+    end
+    
+    subgraph PROVIDERS[Context Providers]
+        TP[ThemeProvider]
+        LP[LanguageProvider]
+    end
+    
+    subgraph PAGES[Pages]
+        PG1[Home Page]
+        PG2[Symptom Checker]
+        PG3[Hospital Finder]
+        PG4[Marketplace]
+        PG5[Admin Dashboard]
+        PG6[Profile]
+    end
+    
+    subgraph COMPONENTS[Components]
+        HDR[Header]
+        FTR[Footer]
+        FM[Forms]
+        CRD[Cards]
+    end
+    
+    HTML --> BODY
+    BODY --> TP
+    TP --> LP
+    LP --> HDR
+    LP --> PG1
+    LP --> PG2
+    LP --> PG3
+    LP --> PG4
+    LP --> PG5
+    LP --> PG6
+    LP --> FTR
+    
+    PG2 --> FM
+    PG3 --> CRD
+    PG4 --> CRD
 ```
 
 ---
@@ -64,393 +153,203 @@ MediGuide AI is a full-stack healthcare platform built with Next.js 14, leveragi
 
 ```
 MediGuide AI/
-├── app/                          # Next.js App Router
-│   ├── (auth)/                   # Auth route group
-│   │   ├── layout.tsx           # Auth layout wrapper
-│   │   ├── signin/page.tsx      # Sign in page
-│   │   └── signup/page.tsx      # Sign up page
-│   │
-│   ├── (dashboard)/              # Dashboard route group
-│   │   ├── layout.tsx           # Dashboard layout
-│   │   └── profile/page.tsx     # User profile page
-│   │
-│   ├── api/                      # API Routes
-│   │   ├── auth/                # Authentication endpoints
-│   │   │   ├── [...nextauth]/   # NextAuth.js handler
-│   │   │   ├── register/        # User registration
-│   │   │   ├── verify-email/    # Email verification
-│   │   │   ├── forgot-password/ # Password reset
-│   │   │   └── resend-verification/
-│   │   │
-│   │   ├── symptoms/            # Symptom analysis
-│   │   │   ├── analyze/         # Gemini AI analysis
-│   │   │   └── emergency/       # Emergency detection
-│   │   │
-│   │   └── profile/             # User profile management
-│   │       ├── personal/        # Personal info
-│   │       ├── health/          # Health data
-│   │       └── emergency-contacts/
-│   │
-│   ├── admin/                    # Admin dashboard
-│   │   ├── page.tsx             # Admin home
-│   │   ├── analytics/           # Analytics dashboard
-│   │   ├── medicines/           # Medicine management
-│   │   └── users/               # User management
-│   │
-│   ├── symptom-checker/          # Main feature page
-│   ├── hospital-finder/          # Hospital locator
-│   ├── marketplace/              # Medicine marketplace
-│   ├── emergency-hotlines/       # Emergency contacts
-│   ├── checkout/                 # Checkout flow
-│   ├── order-tracking/           # Order status
-│   ├── settings/                 # User settings
-│   ├── notification-preferences/ # Notification config
-│   ├── about/                    # About page
-│   ├── contact/                  # Contact page
-│   ├── faq/                      # FAQ page
-│   ├── privacy/                  # Privacy policy
-│   ├── terms/                    # Terms of service
-│   │
-│   ├── layout.tsx               # Root layout
-│   ├── page.tsx                 # Home page
-│   └── globals.css              # Global styles
-│
-├── components/                   # React components
-│   ├── layout/                  # Layout components
-│   │   ├── Header.tsx           # Navigation header
-│   │   └── LayoutWrapper.tsx    # Layout wrapper
-│   │
-│   ├── providers/               # Context providers
-│   │   └── index.tsx            # Theme provider
-│   │
-│   └── ui/                      # UI components
-│       └── [shared components]
-│
-├── lib/                         # Utilities and helpers
-│   ├── LanguageContext.tsx      # i18n context provider
-│   └── [utility files]
-│
-├── public/                      # Static assets
-├── styles/                      # Additional styles
-├── .env.local                   # Environment variables
-├── package.json                 # Dependencies
-├── tailwind.config.js           # Tailwind configuration
-├── tsconfig.json                # TypeScript configuration
-└── next.config.js               # Next.js configuration
+├── app/
+│   ├── (auth)/
+│   │   ├── layout.tsx
+│   │   ├── signin/page.tsx
+│   │   └── signup/page.tsx
+│   ├── (dashboard)/
+│   │   ├── layout.tsx
+│   │   └── profile/page.tsx
+│   ├── api/
+│   │   ├── auth/
+│   │   │   ├── [...nextauth]/route.ts
+│   │   │   ├── register/route.ts
+│   │   │   ├── verify-email/route.ts
+│   │   │   └── reset-password/route.ts
+│   │   ├── symptoms/
+│   │   │   ├── analyze/route.ts
+│   │   │   └── emergency/route.ts
+│   │   └── profile/
+│   │       ├── personal/route.ts
+│   │       ├── health/route.ts
+│   │       └── emergency-contacts/route.ts
+│   ├── admin/
+│   │   ├── page.tsx
+│   │   ├── analytics/page.tsx
+│   │   ├── medicines/page.tsx
+│   │   └── users/page.tsx
+│   ├── symptom-checker/page.tsx
+│   ├── hospital-finder/page.tsx
+│   ├── marketplace/page.tsx
+│   ├── emergency-hotlines/page.tsx
+│   ├── checkout/page.tsx
+│   ├── order-tracking/page.tsx
+│   ├── settings/page.tsx
+│   ├── layout.tsx
+│   └── page.tsx
+├── components/
+│   ├── layout/
+│   │   ├── Header.tsx
+│   │   └── LayoutWrapper.tsx
+│   └── providers/
+│       └── index.tsx
+├── lib/
+│   └── LanguageContext.tsx
+├── public/
+├── .env.local
+├── package.json
+├── tailwind.config.js
+└── tsconfig.json
 ```
 
 ---
 
-## Core Components
+## API Endpoints
 
-### 1. Frontend Layer
+### Symptom Analysis
 
-#### Pages (App Router)
-| Route | Description | Key Features |
-|-------|-------------|--------------|
-| `/` | Home page | Hero section, feature highlights, CTA |
-| `/symptom-checker` | Main feature | AI-powered symptom input and analysis |
-| `/hospital-finder` | Location services | Nearby hospitals with geolocation |
-| `/marketplace` | Medicine catalog | Browse, search, add to cart |
-| `/checkout` | Purchase flow | Cart review, payment form |
-| `/admin/*` | Admin dashboard | Analytics, user management, medicine catalog |
-| `/profile` | User profile | Personal info, health data, emergency contacts |
-
-#### Context Providers
-```typescript
-// Provider hierarchy
-<ThemeProvider>
-  <LanguageProvider>
-    <PublicLayout>
-      {children}
-    </PublicLayout>
-  </LanguageProvider>
-</ThemeProvider>
-```
-
-| Provider | Purpose | State |
-|----------|---------|-------|
-| ThemeProvider | Dark/light mode | theme, setTheme |
-| LanguageProvider | i18n support | language, setLanguage, t() |
-| PublicLayout | Layout wrapper | Navigation, footer |
-
----
-
-### 2. API Layer
-
-#### Symptom Analysis API
-```
-POST /api/symptoms/analyze
-
-Request:
-{
-  "symptoms": "string",
-  "userId": "string (optional)"
-}
-
-Response:
-{
-  "analysis": {
-    "conditions": [
-      { "name": "string", "confidence": "number", "description": "string" }
-    ],
-    "recommendations": ["string"],
-    "urgencyLevel": "low" | "medium" | "high" | "emergency",
-    "disclaimer": "string"
-  }
-}
-```
-
-#### Emergency Detection API
-```
-POST /api/symptoms/emergency
-
-Request:
-{
-  "symptoms": "string"
-}
-
-Response:
-{
-  "isEmergency": boolean,
-  "severity": "critical" | "moderate" | "low",
-  "matchedKeywords": ["string"],
-  "emergencyContacts": {
-    "ambulance": "string",
-    "emergency": "string"
-  },
-  "recommendedAction": "string"
-}
-```
-
-#### Authentication APIs
-| Endpoint | Method | Purpose |
-|----------|--------|---------|
-| `/api/auth/register` | POST | Create new user account |
-| `/api/auth/verify-email` | POST | Verify email address |
-| `/api/auth/forgot-password` | POST | Request password reset |
-| `/api/auth/reset-password` | POST | Reset password |
-| `/api/auth/resend-verification` | POST | Resend verification email |
-| `/api/auth/[...nextauth]` | * | NextAuth.js handlers |
-
-#### Profile APIs
-| Endpoint | Method | Purpose |
-|----------|--------|---------|
-| `/api/profile` | GET/PUT | Get/update user profile |
-| `/api/profile/personal` | PUT | Update personal information |
-| `/api/profile/health` | PUT | Update health data |
-| `/api/profile/emergency-contacts` | PUT | Update emergency contacts |
-
----
-
-### 3. External Integrations
-
-#### Google Gemini AI
-```typescript
-// Integration flow
-const analyzeSymptoms = async (symptoms: string) => {
-  const prompt = `
-    You are a medical assistant. Analyze the following symptoms
-    and provide a structured assessment.
+```mermaid
+sequenceDiagram
+    participant U as User
+    participant C as Client
+    participant A as API
+    participant G as Gemini AI
     
-    Symptoms: ${symptoms}
+    U->>C: Enter symptoms
+    C->>C: Validate input
+    C->>A: POST /api/symptoms/analyze
+    A->>A: Rate limit check
+    A->>G: Send prompt with symptoms
+    G->>A: Return analysis
+    A->>A: Parse JSON response
+    A->>C: Return structured data
+    C->>U: Display results
+```
+
+| Endpoint | Method | Description |
+|----------|--------|-------------|
+| `/api/symptoms/analyze` | POST | AI-powered symptom analysis |
+| `/api/symptoms/emergency` | POST | Emergency keyword detection |
+| `/api/auth/register` | POST | User registration |
+| `/api/auth/verify-email` | POST | Email verification |
+| `/api/auth/reset-password` | POST | Password reset |
+| `/api/profile` | GET/PUT | User profile management |
+
+---
+
+## Authentication Flow
+
+```mermaid
+sequenceDiagram
+    participant U as User
+    participant C as Client
+    participant A as API
+    participant S as Storage
     
-    Respond in JSON format with:
-    - conditions (array of possible conditions with confidence)
-    - recommendations (array of actionable advice)
-    - urgencyLevel (low/medium/high/emergency)
-  `;
-  
-  const response = await geminiModel.generateContent(prompt);
-  return JSON.parse(response.text());
-};
-```
-
-#### Geolocation API
-```typescript
-// Hospital finder implementation
-const getNearbyHospitals = async () => {
-  const position = await navigator.geolocation.getCurrentPosition();
-  const { latitude, longitude } = position.coords;
-  
-  // Fetch hospitals within radius
-  return fetchHospitals(latitude, longitude);
-};
-```
-
-#### LocalStorage
-```typescript
-// Session management
-const storageKeys = {
-  currentUser: 'currentUser',      // User session data
-  language: 'language',            // Language preference
-  rememberMe: 'rememberMe',        // Persist session
-  cart: 'mediguide_cart'          // Shopping cart
-};
+    Note over U,S: Registration Flow
+    U->>C: Submit registration form
+    C->>A: POST /api/auth/register
+    A->>A: Hash password
+    A->>A: Create user
+    A->>U: Send verification email
+    U->>A: Click verification link
+    A->>C: Redirect to login
+    
+    Note over U,S: Login Flow
+    U->>C: Enter credentials
+    C->>A: POST /api/auth/[...nextauth]
+    A->>A: Validate credentials
+    A->>C: Return session
+    C->>S: Store in localStorage
+    C->>U: Redirect to dashboard
 ```
 
 ---
 
-## Data Flow
+## Emergency Detection System
 
-### Symptom Analysis Flow
-```
-User Input → Client Validation → API Request → Gemini AI → Response Processing → UI Render
-     │              │                  │              │              │               │
-     │              │                  │              │              │               │
-     ▼              ▼                  ▼              ▼              ▼               ▼
-  Text Area    Format Check    Rate Limiting   AI Analysis   Structuring    Results Display
-                                 & Auth                        & Caching
-```
-
-### Authentication Flow
-```
-Registration:
-Form Submit → /api/auth/register → Validation → Create User → Send Verification Email → Success
-
-Login:
-Credentials → NextAuth.js → Validate → Create Session → Store in LocalStorage → Redirect
-
-Password Reset:
-Email Input → /api/auth/forgot-password → Generate Token → Send Email → User Clicks Link
-→ /api/auth/reset-password → Validate Token → Update Password → Redirect to Login
-```
-
-### Emergency Detection Flow
-```
-Symptom Input → Keyword Scan → Severity Assessment → Alert Generation
-      │              │                  │                     │
-      ▼              ▼                  ▼                     ▼
-   Text          Pattern          Score Calc            Display Alert
-   Analysis      Matching         (0-100)               + Emergency #
+```mermaid
+flowchart TD
+    A[Symptom Input] --> B{Keyword Scan}
+    
+    B -->|Critical| C[Chest Pain / Cannot Breathe / Severe Bleeding]
+    B -->|Moderate| D[High Fever / Persistent Pain]
+    B -->|Low| E[Mild Headache / Slight Discomfort]
+    
+    C --> F[Severity Score: 90-100]
+    D --> G[Severity Score: 50-89]
+    E --> H[Severity Score: 0-49]
+    
+    F --> I[Emergency Alert]
+    G --> J[Urgent Care Recommended]
+    H --> K[Monitor Symptoms]
+    
+    I --> L[Show Emergency Contacts]
+    I --> M[Call Ambulance Prompt]
 ```
 
 ---
 
-## Security Architecture
+## State Management
 
-### Authentication
-- Credential-based authentication with NextAuth.js patterns
-- Password hashing with bcrypt
-- Email verification required for account activation
-- Session management via localStorage (client) and API tokens (server)
-
-### API Security
-```typescript
-// Rate limiting middleware (conceptual)
-const rateLimiter = {
-  windowMs: 15 * 60 * 1000,  // 15 minutes
-  max: 100                     // requests per window
-};
-
-// Input validation
-const schemas = {
-  symptomAnalysis: z.object({
-    symptoms: z.string().min(10).max(2000),
-    userId: z.string().optional()
-  })
-};
-```
-
-### Data Protection
-- All API routes validate input with Zod schemas
-- Sensitive data (passwords, health info) encrypted at rest
-- HTTPS enforced in production
-- No medical data stored permanently (stateless analysis)
-
----
-
-## Performance Optimization
-
-### Frontend
-- **Code Splitting**: Automatic with App Router
-- **Lazy Loading**: Components loaded on demand
-- **Image Optimization**: Next.js Image component
-- **Caching**: Static assets with Cache-Control headers
-
-### Backend
-- **Server Components**: Reduce client bundle size
-- **API Response Caching**: Cache Gemini AI responses for common symptoms
-- **Edge Runtime**: API routes can run on edge for lower latency
-
-### Database Strategy (Future)
-```
-┌─────────────┐     ┌─────────────┐     ┌─────────────┐
-│   Users     │     │   Health    │     │   Orders    │
-│   Table     │     │   Records   │     │   Table     │
-└─────────────┘     └─────────────┘     └─────────────┘
-       │                   │                   │
-       └───────────────────┴───────────────────┘
-                           │
-                    PostgreSQL / Supabase
+```mermaid
+graph LR
+    subgraph CONTEXT[React Context]
+        LANG_CTX[LanguageContext]
+        THEME_CTX[ThemeProvider]
+    end
+    
+    subgraph LOCAL[LocalStorage]
+        LANG_DATA[language: en|hi|mr]
+        USER_DATA[currentUser: {...}]
+        CART_DATA[mediguide_cart: [...]]
+    end
+    
+    LANG_CTX -->|persist| LANG_DATA
+    LANG_DATA -->|hydrate| LANG_CTX
+    
+    USER_DATA -->|read| AUTH_STATE[Auth State]
+    CART_DATA -->|read| CART_STATE[Cart State]
 ```
 
 ---
 
 ## Deployment Architecture
 
-### Production Deployment (Vercel)
-```
-┌─────────────────────────────────────────────────────────┐
-│                     Vercel Edge Network                  │
-│  ┌─────────────────┐    ┌─────────────────────────────┐│
-│  │  Static Assets  │    │   Serverless Functions      ││
-│  │  (CDN Cached)   │    │   (API Routes)              ││
-│  └─────────────────┘    └─────────────────────────────┘│
-│                          │                              │
-│                          ▼                              │
-│               ┌─────────────────────┐                   │
-│               │  Environment Vars   │                   │
-│               │  - GEMINI_API_KEY   │                   │
-│               │  - NEXTAUTH_SECRET  │                   │
-│               └─────────────────────┘                   │
-└─────────────────────────────────────────────────────────┘
-```
-
-### Environment Variables
-```bash
-# Required
-GEMINI_API_KEY=your_gemini_api_key
-NEXTAUTH_SECRET=your_nextauth_secret
-NEXTAUTH_URL=http://localhost:3000
-
-# Optional
-DATABASE_URL=your_database_url (future)
-SMTP_HOST=your_smtp_host (future)
+```mermaid
+graph TB
+    subgraph VERCEL[Vercel Edge Network]
+        CDN[CDN - Static Assets]
+        EDGE[Edge Functions]
+        ENV[Environment Variables]
+    end
+    
+    subgraph EXTERNAL[External Services]
+        GEMINI_API[Google Gemini API]
+    end
+    
+    subgraph CLIENT[Client]
+        BROWSER[Browser]
+    end
+    
+    CLIENT -->|HTTPS| VERCEL
+    CDN -->|Cache Hit| CLIENT
+    EDGE -->|API Request| GEMINI_API
+    ENV --> EDGE
+    
+    style VERCEL fill:#0070f3,color:#fff
+    style EXTERNAL fill:#4285f4,color:#fff
 ```
 
 ---
 
-## Future Architecture Enhancements
+## Tech Stack
 
-### Phase 1: Database Integration
-- Add PostgreSQL via Supabase or PlanetScale
-- Implement persistent user data storage
-- Add health records with encryption
-
-### Phase 2: Real-time Features
-- WebSocket integration for live chat
-- Real-time order tracking
-- Push notifications
-
-### Phase 3: AI Enhancement
-- Fine-tuned medical model
-- Historical health data analysis
-- Predictive health insights
-
-### Phase 4: Mobile & Offline
-- React Native mobile app
-- Service Worker for offline support
-- Local-first architecture
-
----
-
-## Technical Specifications
-
-| Category | Technology | Version |
-|----------|------------|---------|
+| Layer | Technology | Version |
+|-------|------------|---------|
 | Framework | Next.js | 14.2.3 |
-| Runtime | React | 18.3.1 |
+| UI Library | React | 18.3.1 |
 | Language | TypeScript | 5.4.5 |
 | Styling | Tailwind CSS | 3.4.1 |
 | AI | Google Gemini AI | 0.24.1 |
@@ -458,6 +357,54 @@ SMTP_HOST=your_smtp_host (future)
 | Validation | Zod | 4.4.3 |
 | Animation | Framer Motion | 10.16.16 |
 | Icons | Lucide React | 0.378.0 |
+
+---
+
+## Security
+
+```mermaid
+graph TD
+    A[Request] --> B{Input Validation}
+    B -->|Valid| C[Rate Limiting]
+    B -->|Invalid| D[Reject 400]
+    
+    C --> E{Auth Check}
+    E -->|Protected Route| F{Session Valid}
+    E -->|Public Route| G[Process Request]
+    
+    F -->|Yes| G
+    F -->|No| H[Reject 401]
+    
+    G --> I[Sanitize Output]
+    I --> J[Response]
+```
+
+- All inputs validated with Zod schemas
+- Rate limiting on API routes
+- Password hashing with bcrypt
+- HTTPS enforced in production
+- No permanent medical data storage
+
+---
+
+## Future Roadmap
+
+```mermaid
+timeline
+    title MediGuide AI Roadmap
+    Phase 1 : Database Integration
+             : PostgreSQL via Supabase
+             : Persistent user data
+    Phase 2 : Real-time Features
+             : WebSocket chat
+             : Push notifications
+    Phase 3 : AI Enhancement
+             : Fine-tuned medical model
+             : Predictive analytics
+    Phase 4 : Mobile & Offline
+             : React Native app
+             : Offline support
+```
 
 ---
 
