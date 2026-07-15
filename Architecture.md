@@ -10,7 +10,7 @@ MediGuide AI is a full-stack healthcare platform built with Next.js 14, leveragi
 
 ```mermaid
 graph TB
-    subgraph CLIENT["Client Layer"]
+    subgraph CLIENT[Client Layer]
         BROWSER[Browser]
         HOME[Home Page]
         SYMPTOM[Symptom Checker]
@@ -19,21 +19,21 @@ graph TB
         ADMIN[Admin Dashboard]
     end
 
-    subgraph APP["Application Layer - Next.js 14"]
+    subgraph APP[Application Layer - Next.js 14]
         ROUTER[App Router]
         THEME[ThemeProvider]
         LANG[LanguageProvider]
         LAYOUT[PublicLayout]
     end
 
-    subgraph API["API Layer"]
-        ANALYZE[/api/symptoms/analyze]
-        EMERGENCY[/api/symptoms/emergency]
-        AUTH[/api/auth/*]
-        PROFILE[/api/profile/*]
+    subgraph API[API Layer]
+        ANALYZE[API Symptoms Analyze]
+        EMERGENCY[API Symptoms Emergency]
+        AUTH[API Auth]
+        PROFILE[API Profile]
     end
 
-    subgraph EXTERNAL["External Services"]
+    subgraph EXTERNAL[External Services]
         GEMINI[Google Gemini AI]
         GEO[Geolocation API]
         LOCAL[LocalStorage]
@@ -218,7 +218,7 @@ sequenceDiagram
     
     U->>C: Enter symptoms
     C->>C: Validate input
-    C->>A: POST /api/symptoms/analyze
+    C->>A: POST api/symptoms/analyze
     A->>A: Rate limit check
     A->>G: Send prompt with symptoms
     G->>A: Return analysis
@@ -249,7 +249,7 @@ sequenceDiagram
     
     Note over U,S: Registration Flow
     U->>C: Submit registration form
-    C->>A: POST /api/auth/register
+    C->>A: POST api/auth/register
     A->>A: Hash password
     A->>A: Create user
     A->>U: Send verification email
@@ -258,7 +258,7 @@ sequenceDiagram
     
     Note over U,S: Login Flow
     U->>C: Enter credentials
-    C->>A: POST /api/auth/[...nextauth]
+    C->>A: POST api/auth/nextauth
     A->>A: Validate credentials
     A->>C: Return session
     C->>S: Store in localStorage
@@ -273,13 +273,13 @@ sequenceDiagram
 flowchart TD
     A[Symptom Input] --> B{Keyword Scan}
     
-    B -->|Critical| C[Chest Pain / Cannot Breathe / Severe Bleeding]
-    B -->|Moderate| D[High Fever / Persistent Pain]
-    B -->|Low| E[Mild Headache / Slight Discomfort]
+    B -->|Critical| C[Chest Pain or Cannot Breathe or Severe Bleeding]
+    B -->|Moderate| D[High Fever or Persistent Pain]
+    B -->|Low| E[Mild Headache or Slight Discomfort]
     
-    C --> F[Severity Score: 90-100]
-    D --> G[Severity Score: 50-89]
-    E --> H[Severity Score: 0-49]
+    C --> F[Severity Score 90 to 100]
+    D --> G[Severity Score 50 to 89]
+    E --> H[Severity Score 0 to 49]
     
     F --> I[Emergency Alert]
     G --> J[Urgent Care Recommended]
@@ -301,9 +301,9 @@ graph LR
     end
     
     subgraph LOCAL[LocalStorage]
-        LANG_DATA[language: en|hi|mr]
-        USER_DATA[currentUser: {...}]
-        CART_DATA[mediguide_cart: [...]]
+        LANG_DATA[language en or hi or mr]
+        USER_DATA[currentUser object]
+        CART_DATA[mediguide cart]
     end
     
     LANG_CTX -->|persist| LANG_DATA
@@ -320,7 +320,7 @@ graph LR
 ```mermaid
 graph TB
     subgraph VERCEL[Vercel Edge Network]
-        CDN[CDN - Static Assets]
+        CDN[CDN Static Assets]
         EDGE[Edge Functions]
         ENV[Environment Variables]
     end
@@ -390,22 +390,23 @@ graph TD
 ## Future Roadmap
 
 ```mermaid
-timeline
+gantt
     title MediGuide AI Roadmap
-    Phase 1 : Database Integration
-             : PostgreSQL via Supabase
-             : Persistent user data
-    Phase 2 : Real-time Features
-             : WebSocket chat
-             : Push notifications
-    Phase 3 : AI Enhancement
-             : Fine-tuned medical model
-             : Predictive analytics
-    Phase 4 : Mobile & Offline
-             : React Native app
-             : Offline support
+    dateFormat  YYYY-MM
+    section Phase 1
+    Database Integration     :2024-07, 2m
+    PostgreSQL Setup         :2024-07, 1m
+    section Phase 2
+    Real-time Features       :2024-09, 2m
+    WebSocket Chat           :2024-09, 1m
+    section Phase 3
+    AI Enhancement           :2024-11, 2m
+    Fine-tuned Model         :2024-11, 1m
+    section Phase 4
+    Mobile App               :2025-01, 2m
+    Offline Support          :2025-01, 1m
 ```
 
 ---
 
-*Architecture documentation last updated: July 2024*
+*Architecture documentation last updated:16 July 2026*
